@@ -47,3 +47,7 @@ They also score the same pairs with the Tulu-3 reward model. It prefers a faithf
 ## 7. Three attempts to close the gap
 
 A prompt that orders the model to stay faithful helps on average and hurts some models. Rebuilding the DPO pairs so that a faithful summary of an opposing document is the preferred answer, and rerunning only DPO, cuts one gap from 21.6 points to 10.7. In Gemma-3 27B, the difference in activations between the opposing and confirming versions of a document is nearly a single direction. Steering that direction raises faithfulness from 76% to 93% on a 100-document safety subset.
+
+## The experiment
+
+The open question is whether that gap is the DPO update or the preference data. The run that answers it starts from Llama-3.1-8B, retrains their SFT→DPO pipeline, and only then trains SimPO, KTO, and PPO from the same SFT checkpoint on the same preference mixture. A rebuilt set of pairs, in which a faithful summary of a disagreeable source is the chosen answer, is a second factor. Safety and capability suites are scored on every checkpoint that gets reported. The checklist of remaining work is `WHAT_TO_DO.md`. The decision rules, the replication gates, and the launch commands are in `experiment/optimizer_gap/README.md`.
