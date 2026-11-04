@@ -34,6 +34,9 @@ MAX_INPUT_TOKENS = 2048
 MAX_NEW_TOKENS = 512
 JUDGE_MAX_NEW_TOKENS = 256
 BATCH_SIZE = 64
+# The 32B judge in bf16 leaves little room on an 80GB GPU. Batch 64 asks
+# for another several GB of activations and was the Gate 1 out-of-memory stop.
+JUDGE_BATCH_SIZE = 4
 
 
 def build_items(records):
@@ -162,27 +165,53 @@ def _generate(model, tokenizer, prompts, max_new_tokens):
     return [text.strip() for text in texts]
 
 
+def _release_gpu():
+    import gc
+
+    import torch
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def generate_outputs(model_name, items, batch_size=BATCH_SIZE):
     model, tokenizer = _load_causal(model_name)
-    prompts = [_render(tokenizer, [{"role": "user", "content": item["prompt"]}]) for item in items]
-    outputs = []
-    for start in range(0, len(prompts), batch_size):
-        outputs.extend(_generate(model, tokenizer, prompts[start:start + batch_size], MAX_NEW_TOKENS))
-    rows = []
-    for item, output in zip(items, outputs):
-        rows.append({**item, "output": output})
-    return rows
+    try:
+        prompts = [_render(tokenizer, [{"role": "user", "content": item["prompt"]}]) for item in items]
+        outputs = []
+        for start in range(0, len(prompts), batch_size):
+            outputs.extend(_generate(model, tokenizer, prompts[start:start + batch_size], MAX_NEW_TOKENS))
+        rows = []
+        for item, output in zip(items, outputs):
+            rows.append({**item, "output": output})
+        return rows
+    finally:
+        model = None
+        _release_gpu()
 
 
-def judge_outputs(judge_name, rows, batch_size=BATCH_SIZE):
+def judge_outputs(judge_name, rows, batch_size=JUDGE_BATCH_SIZE):
     model, tokenizer = _load_causal(judge_name)
+    try:
+        return _judge_with_model(model, tokenizer, rows, batch_size)
+    finally:
+        model = None
+        _release_gpu()
+
+
+def _judge_with_model(model, tokenizer, rows, batch_size):
     prompts = [
         _render(tokenizer, judge_messages(row["document"], row["claim"], row["output"]))
         for row in rows
     ]
+    print(f"judging {len(prompts)} answers in batches of {batch_size}", flush=True)
     texts = []
     for start in range(0, len(prompts), batch_size):
         texts.extend(_generate(model, tokenizer, prompts[start:start + batch_size], JUDGE_MAX_NEW_TOKENS))
+        done = min(start + batch_size, len(prompts))
+        if done == len(prompts) or done % (batch_size * 25) == 0:
+            print(f"judged {done} / {len(prompts)}", flush=True)
     judged = []
     for row, text in zip(rows, texts):
         judged.append({**row, "judge_raw": text, "label": parse_judge_label(text)})
