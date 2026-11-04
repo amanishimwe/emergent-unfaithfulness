@@ -14,6 +14,7 @@ from experiment.optimizer_gap.commands import (
     preference_command,
     sft_command,
 )
+from experiment.optimizer_gap.evaluate import build_items, judge_messages, summarize
 from experiment.optimizer_gap.handcheck import allocate, sample_handcheck
 from experiment.optimizer_gap.metrics import (
     bootstrap_gap,
@@ -27,7 +28,6 @@ from experiment.optimizer_gap.pairs import (
     orient_faithful_chosen,
     rebuilt_pairs,
 )
-from experiment.optimizer_gap.evaluate import build_items, judge_messages, summarize
 from experiment.optimizer_gap.prepare import main as prepare_main
 from experiment.optimizer_gap.prompts import is_faithful, parse_judge_label
 from experiment.optimizer_gap.protocol import (

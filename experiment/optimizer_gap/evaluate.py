@@ -14,8 +14,17 @@ Gate 1 passes when the aggregate FaithGap is within 5 points of 0.216.
 """
 
 import argparse
+import gc
 import json
 from pathlib import Path
+
+try:
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+except ImportError:
+    torch = None
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
 
 from experiment.optimizer_gap.groups import category_group
 from experiment.optimizer_gap.metrics import bootstrap_gap, faith_gap, mcnemar, wilson_interval
@@ -120,9 +129,8 @@ def _write_jsonl(path, rows):
 
 
 def _load_causal(name):
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
+    if torch is None or AutoTokenizer is None or AutoModelForCausalLM is None:
+        raise ImportError("torch and transformers are required to score a checkpoint")
     tokenizer = AutoTokenizer.from_pretrained(name)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -143,8 +151,6 @@ def _render(tokenizer, messages):
 
 
 def _generate(model, tokenizer, prompts, max_new_tokens):
-    import torch
-
     encoded = tokenizer(
         prompts,
         return_tensors="pt",
@@ -166,10 +172,6 @@ def _generate(model, tokenizer, prompts, max_new_tokens):
 
 
 def _release_gpu():
-    import gc
-
-    import torch
-
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()

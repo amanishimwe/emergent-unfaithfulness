@@ -15,16 +15,16 @@ Details, hyperparameters, and launch commands: `experiment/optimizer_gap/README.
 
 ## Build before the first training job
 
-- [ ] Clone FaithConflict and open-instruct: `bash scripts/fetch_deps.sh`. Recorded commits go to `third_party/PINS.txt`.
-- [ ] Build the pair files: `python -m experiment.optimizer_gap.prepare` on `third_party/Emergent-unfaithfulness/data/faithconflict.json`.
+- [x] Clone FaithConflict and open-instruct: `bash scripts/fetch_deps.sh`. Recorded commits are in `third_party/PINS.txt` (`faithconflict` `59e66a0`, `open-instruct` `394b616`).
+- [x] Build the pair files: `rebuilt_pairs.jsonl` and `rebuilt_kto.jsonl` are in `experiment/optimizer_gap/data/`.
 - [ ] Check every rendered flag against that open-instruct commit’s `--help`. The current names are `--loss_type` and `--beta`.
-- [ ] Write the eval runner. It loads a checkpoint, summarizes all 1,880 FaithConflict documents with the direct prompt, greedy, one answer each, then calls the judges. The primary judge is `Qwen/Qwen2.5-32B-Instruct`. The judge sees the document, the claim, and the output.
+- [x] Write the eval runner. It loads a checkpoint, summarizes all 1,880 FaithConflict documents with the direct prompt, greedy, one answer each, then calls the judges. The primary judge is `Qwen/Qwen2.5-32B-Instruct`. The judge sees the document, the claim, and the output. The judge batch is 4. Batch 64 ran out of memory on one H100 80GB.
 - [ ] Write the KTO trainer call (TRL) and the two-step PPO path: a reward model on the same pairs, then PPO of the SFT policy against that frozen model.
 - [ ] Write the safety and capability calls: `olmes` tasks `safety::olmo3` and `tulu_3_dev`.
 
 ## Run, in this order
 
-- [ ] **Gate 1. Score the released model.** `allenai/Llama-3.1-Tulu-3-8B-DPO`, direct prompt, no system prompt. Pass: aggregate FaithGap within 5 points of **21.6**. A miss means the prompt or the judge is wrong. Stop.
+- [x] **Gate 1. Score the released model.** `allenai/Llama-3.1-Tulu-3-8B-DPO`, direct prompt, no system prompt. Passed. FaithGap **24.3** (paper **21.6**, difference 2.7). Confirming 95.2%, opposing 71.0%. Safety 46.4, capability 22.6, subjective −2.3. Summary: `experiment/optimizer_gap/runs/gate1/summary.json`. One H100 80GB for 1h 4m, $2.64. The pod has been deleted.
 - [ ] **Gate 2. Retrain from Llama-3.1-8B.** SFT on `allenai/tulu-3-sft-mixture` (effective batch 128, 2 epochs, learning rate 5e-6, seed 123), then DPO on the unmodified preference mixture (`dpo_norm`, beta 5, learning rate 5e-7, 1 epoch). Pass: DPO gap within 5 points of **21.8**, and at least 8 points above the SFT gap (theirs were 9.7, then 21.8). Stop if it fails.
 - [ ] **Swap the optimizer.** Same SFT checkpoint, same unmodified mixture.
   - [ ] DPO, the run from Gate 2.
