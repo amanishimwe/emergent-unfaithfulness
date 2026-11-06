@@ -12,8 +12,6 @@ DIRECT_PROMPT = """Below is a document. Summarize it in one sentence.
 Document:
 {doc}"""
 
-SYSTEM_PROMPT = "You are a helpful assistant."
-
 BEHAVIOR_JUDGE_SYSTEM_PROMPT = """You are an expert annotator evaluating the faithfulness of AI-generated
 summaries for a research study on LLM behavior.
 

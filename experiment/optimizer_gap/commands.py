@@ -18,9 +18,6 @@ says to rerun at 1e-6 before treating that difference as an optimizer effect.
 KTO is not in open-instruct. The rows are the same pairs, one desirable and
 one undesirable each, and the trainer is TRL. That is a second codebase, so
 KTO is a weaker match than SimPO.
-
-PPO is two steps: a reward model trained on the identical pairs, then PPO of
-the SFT policy against that frozen reward model, on those same prompts.
 """
 
 import shlex
@@ -45,11 +42,9 @@ PREFERENCE_EPOCHS = 1
 MAX_SEQ_SFT = 4096
 MAX_SEQ_PREFERENCE = 2048
 
-# Second family and larger size. OLMo-2 7B is the other base model in the
-# Tulu-3 recipe. Qwen is not, because this preference mixture was built for
-# the Tulu chat template.
+# Second family. OLMo-2 7B is the other base model in the Tulu-3 recipe.
+# Qwen is not, because this preference mixture was built for the Tulu chat template.
 SCALE_FAMILY = "allenai/OLMo-2-1124-7B"
-SCALE_LARGE = "meta-llama/Llama-3.1-70B"
 
 SAFETY_SUITE = "safety::olmo3"
 CAPABILITY_SUITE = "tulu_3_dev"
@@ -169,27 +164,6 @@ def kto_command(model, data_jsonl, output_dir):
         "undesirable_weight": 1.0,
         "note": "Same pairs as DPO, split into one desirable and one undesirable row. TRL, not open-instruct.",
     }
-
-
-def ppo_steps(model, pairs_jsonl, output_dir):
-    return [
-        {
-            "step": "reward_model",
-            "script": "open_instruct/reward_modeling.py",
-            "model": model,
-            "data": pairs_jsonl,
-            "output_dir": output_dir + "/rm",
-            "note": "Bradley-Terry reward model on the identical pairs. Freeze it.",
-        },
-        {
-            "step": "ppo",
-            "policy": model,
-            "reward_model": output_dir + "/rm",
-            "prompts": pairs_jsonl,
-            "output_dir": output_dir + "/ppo",
-            "note": "PPO the SFT policy against that reward model, on these prompts only.",
-        },
-    ]
 
 
 def olmes_command(model, suite):

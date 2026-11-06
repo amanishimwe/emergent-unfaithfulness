@@ -21,10 +21,9 @@ Do not interpret a later stage if the gate in front of it fails.
    - DPO, the replication run above (`dpo_norm`, beta 5, learning rate 5e-7, 1 epoch).
    - SimPO, same script, beta 2, gamma/beta 0.5, same learning rate. SimPO at beta 5 would not be SimPO.
    - KTO, via TRL, each pair split into one desirable and one undesirable row. Nothing is dropped. This is a second codebase, so it is a weaker match than SimPO.
-   - PPO, reported separately. Train a reward model on these same pairs, freeze it, and run PPO of the SFT policy against it on these prompts. PPO does not vote, because the signal passes through a reward model.
 4. **Rebuild the pairs, then retrain each optimizer.** See below. This asks whether a faithfulness relabel helps, and whether that help depends on which optimizer applies it. It is a second question. It is not part of the column that answers §5.1.
 5. **Safety and capability.** `olmes` suites `safety::olmo3` and `tulu_3_dev`, the suites used in §5.3. A faithfulness gain counts as a fix when neither suite mean drops more than 3 points relative to the same optimizer trained on the original mixture.
-6. **Scale the contrast that answered the question.** OLMo-2-1124-7B, using the published Tulu-3 OLMo recipe rather than the Llama learning rate, and Llama-3.1-70B. Repeat two cells, not the full matrix: DPO and SimPO if the signal was shared, or DPO and the furthest offline optimizer if only DPO opened the gap. Do not scale an inconclusive 8B result. Qwen is not in this round. The Tulu preference mixture was built for the Tulu chat template.
+6. **Scale the contrast that answered the question.** OLMo-2-1124-7B, using the published Tulu-3 OLMo recipe rather than the Llama learning rate. Repeat two cells, not the full matrix: DPO and SimPO if the signal was shared, or DPO and the furthest offline optimizer if only DPO opened the gap. Do not scale an inconclusive 8B result. Qwen is not in this round. The Tulu preference mixture was built for the Tulu chat template.
 
 ## How the original-mixture column is read
 

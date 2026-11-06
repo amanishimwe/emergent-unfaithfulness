@@ -28,6 +28,8 @@ except ImportError:
 
 from experiment.optimizer_gap.groups import category_group
 from experiment.optimizer_gap.metrics import bootstrap_gap, faith_gap, mcnemar, wilson_interval
+from experiment.optimizer_gap.pairs import render_document
+from experiment.optimizer_gap.prepare import write_jsonl
 from experiment.optimizer_gap.prompts import (
     BEHAVIOR_JUDGE_SYSTEM_PROMPT,
     PRIMARY_JUDGE,
@@ -38,7 +40,6 @@ from experiment.optimizer_gap.prompts import (
 )
 from experiment.optimizer_gap.protocol import eval_gate
 
-CLAIM_SLOT = "[CLAIM]"
 MAX_INPUT_TOKENS = 2048
 MAX_NEW_TOKENS = 512
 JUDGE_MAX_NEW_TOKENS = 256
@@ -52,11 +53,8 @@ def build_items(records):
     """One confirming document and one opposing document per FaithConflict record."""
     items = []
     for record in records:
-        template = record["summary_template"]
-        if template.count(CLAIM_SLOT) != 3:
-            raise ValueError(f"{record.get('id')} template does not contain [CLAIM] three times")
         for condition, claim in (("confirming", record["claim_true"]), ("opposing", record["claim_false"])):
-            document = template.replace(CLAIM_SLOT, claim)
+            document = render_document(record, claim)
             items.append({
                 "pair_id": record["id"],
                 "condition": condition,
@@ -119,13 +117,6 @@ def _read_jsonl(path):
         if line.strip():
             rows.append(json.loads(line))
     return rows
-
-
-def _write_jsonl(path, rows):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as handle:
-        for row in rows:
-            handle.write(json.dumps(row) + "\n")
 
 
 def _load_causal(name):
@@ -245,11 +236,11 @@ def main(argv=None):
             for row in fresh:
                 done[(row["pair_id"], row["condition"])] = row
             ordered = [done[(item["pair_id"], item["condition"])] for item in items]
-            _write_jsonl(generations_path, ordered)
+            write_jsonl(generations_path, ordered)
         else:
             ordered = [done[(item["pair_id"], item["condition"])] for item in items]
         judged = judge_outputs(args.judge, ordered)
-        _write_jsonl(judged_path, judged)
+        write_jsonl(judged_path, judged)
 
     report = summarize(judged)
     report["model"] = args.model

@@ -14,9 +14,6 @@ Published targets, as fractions of documents:
 """
 
 OFFLINE_OPTIMIZERS = ("dpo", "simpo", "kto")
-# PPO trains through a reward model fit to the same pairs. It is reported
-# beside the offline comparison, and it does not vote.
-SEPARATE_OPTIMIZER = "ppo"
 
 RELEASED_DPO_GAP = 0.216
 FROM_SCRATCH_SFT_GAP = 0.097

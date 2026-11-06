@@ -10,7 +10,6 @@ from experiment.optimizer_gap.commands import (
     grad_accum,
     kto_command,
     olmes_command,
-    ppo_steps,
     preference_command,
     sft_command,
 )
@@ -218,13 +217,10 @@ class CommandTests(unittest.TestCase):
         self.assertIn("--seed 123", command["command"])
         self.assertEqual(command["gradient_accumulation_steps"], 16)
 
-    def test_kto_and_ppo_are_named_as_separate_trainers(self):
+    def test_kto_is_a_separate_trainer(self):
         kto = kto_command("sft-checkpoint", "rebuilt_kto.jsonl", "out/kto")
         self.assertEqual(kto["trainer"], "trl.KTOTrainer")
         self.assertEqual(kto["data"], "rebuilt_kto.jsonl")
-        steps = ppo_steps("sft-checkpoint", "pairs.jsonl", "out/ppo")
-        self.assertEqual([step["step"] for step in steps], ["reward_model", "ppo"])
-        self.assertEqual(steps[1]["reward_model"], "out/ppo/rm")
 
     def test_safety_and_capability_suites(self):
         self.assertEqual(olmes_command("checkpoint", "safety::olmo3")[-1], "safety::olmo3")

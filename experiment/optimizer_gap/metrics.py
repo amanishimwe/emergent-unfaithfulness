@@ -74,6 +74,13 @@ def mcnemar(b, c):
     return {"chi2": chi2, "p": p}
 
 
+def _percentile_interval(samples, n_boot):
+    samples.sort()
+    lo = samples[int(0.025 * (n_boot - 1))]
+    hi = samples[int(0.975 * (n_boot - 1))]
+    return lo, hi
+
+
 def bootstrap_gap(rows, n_boot=1000, seed=0):
     paired = _paired(rows)
     ids = list(paired)
@@ -87,9 +94,7 @@ def bootstrap_gap(rows, n_boot=1000, seed=0):
             confirming += side["confirming"]
             opposing += side["opposing"]
         gaps.append((confirming - opposing) / n)
-    gaps.sort()
-    lo = gaps[int(0.025 * (n_boot - 1))]
-    hi = gaps[int(0.975 * (n_boot - 1))]
+    lo, hi = _percentile_interval(gaps, n_boot)
     return {"low": lo, "high": hi, "n_boot": n_boot, "seed": seed}
 
 
@@ -110,7 +115,5 @@ def bootstrap_gap_difference(rows_a, rows_b, n_boot=1000, seed=0):
             gap_a += paired_a[pair_id]["confirming"] - paired_a[pair_id]["opposing"]
             gap_b += paired_b[pair_id]["confirming"] - paired_b[pair_id]["opposing"]
         diffs.append((gap_a - gap_b) / n)
-    diffs.sort()
-    lo = diffs[int(0.025 * (n_boot - 1))]
-    hi = diffs[int(0.975 * (n_boot - 1))]
+    lo, hi = _percentile_interval(diffs, n_boot)
     return {"low": lo, "high": hi, "excludes_zero": lo > 0 or hi < 0, "n_boot": n_boot, "seed": seed}

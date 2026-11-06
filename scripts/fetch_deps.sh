@@ -21,24 +21,16 @@ faithconflict_paths() {
   echo /data/faithconflict.json
 }
 
-# SFT, DPO/SimPO, and the reward-model step, plus the Tulu-3 and OLMo-2 7B recipes.
-# The import closure of those three trainers is listed here. GRPO, Miles, docs,
-# and the other training recipes are not part of this comparison.
+# SFT and DPO/SimPO, plus the Tulu-3 8B and OLMo-2 7B recipes.
+# Paths below are the import closure of those two trainers.
 open_instruct_paths() {
   cat <<'EOF'
 /.gitignore
 /LICENSE
 /README.md
-/configs/ds_configs/deepspeed_zero2.yaml
-/configs/ds_configs/deepspeed_zero3.yaml
-/configs/ds_configs/stage2_no_offloading_accelerate.conf
-/configs/ds_configs/stage3_no_offloading.conf
 /configs/ds_configs/stage3_no_offloading_accelerate.conf
-/configs/ds_configs/stage3_offloading.conf
-/configs/ds_configs/stage3_offloading_accelerate.conf
 /configs/train_configs/olmo2/olmo2_1124_7b_dpo.yaml
 /configs/train_configs/olmo2/olmo2_1124_7b_sft.yaml
-/configs/train_configs/tulu3/tulu3_dpo_70b.yaml
 /configs/train_configs/tulu3/tulu3_dpo_8b.yaml
 /configs/train_configs/tulu3/tulu3_sft.yaml
 /mason.py
@@ -61,18 +53,11 @@ open_instruct_paths() {
 /open_instruct/logger_utils.py
 /open_instruct/math_utils.py
 /open_instruct/model_utils.py
-/open_instruct/olmo_adapter/__init__.py
 /open_instruct/olmo_core_callbacks.py
 /open_instruct/olmo_core_hybrid.py
 /open_instruct/olmo_core_utils.py
 /open_instruct/padding_free_collator.py
-/open_instruct/reward_modeling.py
-/open_instruct/reward_modeling_eval.py
-/open_instruct/rubrics/__init__.py
-/open_instruct/rubrics/evolving_rubric_step.py
-/open_instruct/rubrics/metrics.py
 /open_instruct/rubrics/prompts.py
-/open_instruct/rubrics/rubric_utils.py
 /open_instruct/rubrics/run_utils.py
 /open_instruct/tensor_utils.py
 /open_instruct/tokenizer_utils.py
@@ -83,7 +68,6 @@ open_instruct_paths() {
 /scripts/train/olmo2/finetune_7b.sh
 /scripts/train/tulu3/dpo_8b.sh
 /scripts/train/tulu3/finetune_8b.sh
-/scripts/train/tulu3/reward_modeling_8b.sh
 /uv.lock
 EOF
 }

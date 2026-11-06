@@ -20,11 +20,15 @@ from experiment.optimizer_gap.prompts import FAITHFUL_LABELS, direct_prompt, is_
 CLAIM_SLOT = "[CLAIM]"
 
 
-def opposing_document(record):
+def render_document(record, claim):
     template = record["summary_template"]
     if template.count(CLAIM_SLOT) != 3:
         raise ValueError(f"{record.get('id')} template does not contain [CLAIM] three times")
-    return template.replace(CLAIM_SLOT, record["claim_false"])
+    return template.replace(CLAIM_SLOT, claim)
+
+
+def opposing_document(record):
+    return render_document(record, record["claim_false"])
 
 
 def faithful_summary(claim):
@@ -40,7 +44,7 @@ def disclaimer_summary(claim):
 
 
 def silent_flip(opposite_claim):
-    return f"A study confirmed that {opposite_claim}."
+    return faithful_summary(opposite_claim)
 
 
 def orient_faithful_chosen(chosen, rejected, chosen_label, rejected_label):
